@@ -3,6 +3,10 @@ var Task = require('../models/task');
 
 var router = express.Router();
 
+router.get('/test', function(req, res, next) {
+  res.send('Hello world');
+});
+
 /* GET home page. */
 router.get('/', function(req, res, next) {
   Task.find()
@@ -68,6 +72,4 @@ router.post('/deleteTask', function(req, res, next) {
       res.send('Sorry! Something went wrong.');
     });
 });
-
-
 module.exports = router;
