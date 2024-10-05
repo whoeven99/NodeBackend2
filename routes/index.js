@@ -1,75 +1,68 @@
 var express = require('express');
-var Task = require('../models/task');
 
 var router = express.Router();
+const sql = require('mssql');
+
+const config = {
+    user: 'bogdatech-test', // better stored in an app setting such as process.env.DB_USER
+    password: 'Hyw124563', // better stored in an app setting such as process.env.DB_PASSWORD
+    server: 'bogdatech-test.database.windows.net', // better stored in an app setting such as process.env.DB_SERVER
+    port: 1433, // optional, defaults to 1433, better stored in an app setting such as process.env.DB_PORT
+    database: 'test-database', // better stored in an app setting such as process.env.DB_NAME
+    authentication: {
+        type: 'default'
+    },
+    options: {
+        encrypt: true
+    }
+}
 
 router.get('/test', function(req, res, next) {
   res.send('Hello world');
 });
 
+
+async function connectAndQuery() {
+        var poolConnection = await sql.connect(config);
+
+        console.log("Reading rows from the Table...");
+        var resultSet = await poolConnection.request().query(`SELECT TOP (20) * FROM [dbo].[test]`);
+
+        console.log(`${resultSet.recordset.length} rows returned.`);
+        console.log(`data: ${resultSet.toString()}`);
+
+        // output column headers
+        var columns = "";
+        for (var column in resultSet.recordset.columns) {
+            columns += column + ", ";
+        }
+        console.log("%s\t", columns.substring(0, columns.length - 2));
+
+        // ouput row contents from default record set
+        resultSet.recordset.forEach(row => {
+            console.log("%s\t%s", row.CategoryName, row.ProductName);
+        });
+
+        // close connection only when we're certain application is finished
+        poolConnection.close();
+}
+
 /* GET home page. */
-router.get('/', function(req, res, next) {
-  Task.find()
-    .then((tasks) => {      
-      const currentTasks = tasks.filter(task => !task.completed);
-      const completedTasks = tasks.filter(task => task.completed === true);
-
-      console.log(`Total tasks: ${tasks.length}   Current tasks: ${currentTasks.length}    Completed tasks:  ${completedTasks.length}`)
-      res.render('index', { currentTasks: currentTasks, completedTasks: completedTasks });
-    })
-    .catch((err) => {
-      console.log(err);
-      res.send('Sorry! Something went wrong.');
-    });
+router.get('/', async function(req, res, next) {
+//  Task.find()
+//    .then((tasks) => {
+//      const currentTasks = tasks.filter(task => !task.completed);
+//      const completedTasks = tasks.filter(task => task.completed === true);
+//
+//      console.log(`Total tasks: ${tasks.length}   Current tasks: ${currentTasks.length}    Completed tasks:  ${completedTasks.length}`)
+//      res.render('index', { currentTasks: currentTasks, completedTasks: completedTasks });
+//    })
+//    .catch((err) => {
+//      console.log(err);
+//      res.send('Sorry! Something went wrong.');
+//    });
+  await connectAndQuery();
+  res.send('Get successful! ');
 });
 
-
-router.post('/addTask', function(req, res, next) {
-  const taskName = req.body.taskName;
-  const createDate = Date.now();
-  
-  var task = new Task({
-    taskName: taskName,
-    createDate: createDate
-  });
-  console.log(`Adding a new task ${taskName} - createDate ${createDate}`)
-
-  task.save()
-      .then(() => { 
-        console.log(`Added new task ${taskName} - createDate ${createDate}`)        
-        res.redirect('/'); })
-      .catch((err) => {
-          console.log(err);
-          res.send('Sorry! Something went wrong.');
-      });
-});
-
-router.post('/completeTask', function(req, res, next) {
-  console.log("I am in the PUT method")
-  const taskId = req.body._id;
-  const completedDate = Date.now();
-
-  Task.findByIdAndUpdate(taskId, { completed: true, completedDate: Date.now()})
-    .then(() => { 
-      console.log(`Completed task ${taskId}`)
-      res.redirect('/'); }  )
-    .catch((err) => {
-      console.log(err);
-      res.send('Sorry! Something went wrong.');
-    });
-});
-
-
-router.post('/deleteTask', function(req, res, next) {
-  const taskId = req.body._id;
-  const completedDate = Date.now();
-  Task.findByIdAndDelete(taskId)
-    .then(() => { 
-      console.log(`Deleted task $(taskId)`)      
-      res.redirect('/'); }  )
-    .catch((err) => {
-      console.log(err);
-      res.send('Sorry! Something went wrong.');
-    });
-});
 module.exports = router;

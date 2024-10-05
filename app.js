@@ -13,14 +13,6 @@ async function getApp() {
 
   // Database
   // Use AZURE_COSMOS_CONNECTIONSTRING if available, otherwise fall back to MONGODB_URI
-  const mongoUri = process.env.AZURE_COSMOS_CONNECTIONSTRING || process.env.MONGODB_URI;
-
-  mongoose.connect(mongoUri).then(() => {
-    console.log('Connected to database');
-  }).catch((err) => {
-    console.error('Error connecting to database:', err);
-  });
-
   var app = express();
 
   var port = normalizePort(process.env.PORT || '3000');
